@@ -1,6 +1,6 @@
-# [Project name]
+# 0G AI Compute Dashboard
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A monitoring and inference dashboard for the 0G Compute Network — submit AI jobs, track providers, view activity logs, and configure wallet/API settings.
 
 ## Run & Operate
 
