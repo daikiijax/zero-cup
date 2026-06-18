@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useListActivity } from "@workspace/api-client-react";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -18,10 +19,16 @@ const LEVEL_STYLES: Record<string, { badge: string; text: string; prefix: string
 export function Activity() {
   const queryClient = useQueryClient();
   const { data: entries, isLoading, refetch } = useListActivity();
+  const [refreshing, setRefreshing] = useState(false);
 
-  function handleRefresh() {
-    queryClient.invalidateQueries({ queryKey: getListActivityQueryKey() });
-    refetch();
+  async function handleRefresh() {
+    setRefreshing(true);
+    try {
+      await queryClient.invalidateQueries({ queryKey: getListActivityQueryKey() });
+      await refetch();
+    } finally {
+      setTimeout(() => setRefreshing(false), 600);
+    }
   }
 
   return (
@@ -40,11 +47,12 @@ export function Activity() {
           variant="outline"
           size="sm"
           onClick={handleRefresh}
+          disabled={refreshing || isLoading}
           data-testid="button-refresh-logs"
           className="font-mono text-xs gap-2"
         >
-          <RefreshCw className="w-3 h-3" />
-          REFRESH
+          <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "REFRESHING..." : "REFRESH"}
         </Button>
       </div>
 

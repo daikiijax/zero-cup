@@ -24,7 +24,10 @@ function extractLLMKey(req: { headers: Record<string, string | string[] | undefi
 }
 
 function detectNetwork(rpcUrl?: string): "mainnet" | "testnet" {
-  return rpcUrl?.includes("mainnet") ? "mainnet" : "testnet";
+  // mainnet RPC is "https://evmrpc.0g.ai" (no "mainnet" in URL); testnet has "testnet" in URL
+  if (!rpcUrl) return "testnet";
+  if (rpcUrl.includes("evmrpc.0g.ai") && !rpcUrl.includes("testnet")) return "mainnet";
+  return "testnet";
 }
 
 inferenceRouter.post("/", async (req, res) => {

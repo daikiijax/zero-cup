@@ -178,7 +178,8 @@ export function Inference() {
   const { toast } = useToast();
   const rpcUrl = useCurrentRpcUrl();
   const llmKey = useLLMApiKey();
-  const network = rpcUrl.includes("mainnet") ? "mainnet" : "testnet";
+  // mainnet URL is "https://evmrpc.0g.ai" — no "mainnet" in it, so check "testnet" absence instead
+  const network = (rpcUrl.includes("evmrpc.0g.ai") && !rpcUrl.includes("testnet")) ? "mainnet" : "testnet";
 
   const detectedProvider = llmKey.trim() ? detectLLMProvider(llmKey) : null;
   const isExternalMode = !!detectedProvider;
