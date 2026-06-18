@@ -320,11 +320,11 @@ export function Inference() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-mono font-bold tracking-tight text-foreground">AI INFERENCE</h1>
+          <h1 className="text-3xl font-mono font-bold tracking-tight text-foreground">0G TOKENOMICS AGENT</h1>
           <p className="text-muted-foreground mt-1">
             {isExternalMode
               ? `Submit inference via ${providerInfo?.label ?? detectedProvider}`
-              : "Submit inference requests to the 0G Compute Network"}
+              : "AI-driven Tokenomics & 0G Ecosystem Analyzer"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -372,6 +372,24 @@ export function Inference() {
                 <p className="text-xs text-muted-foreground text-right font-mono">
                   {prompt.length}/8000
                 </p>
+                {/* Suggested prompts */}
+                <div className="flex flex-col gap-1.5 pt-1">
+                  {[
+                    "Design a tokenomics model for an AI agent on the 0G Network",
+                    "Explain how 0G Storage integrates with decentralized AI inference",
+                    "Analyze the benefits of 0G Data Availability for scalable applications",
+                  ].map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      disabled={isRunning}
+                      onClick={() => setPrompt(suggestion)}
+                      className="text-left text-[11px] font-mono text-muted-foreground hover:text-primary border border-border hover:border-primary/40 rounded px-2.5 py-1.5 transition-colors bg-muted/20 hover:bg-primary/5 disabled:opacity-40"
+                    >
+                      ↳ {suggestion}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Model selector */}

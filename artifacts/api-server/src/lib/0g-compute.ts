@@ -110,9 +110,16 @@ export async function runExternalInference(
       headers,
       body: JSON.stringify({
         model: req.model,
-        messages: [{ role: "user", content: sanitizedPrompt }],
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are the 0G Tokenomics Agent, an expert in Web3 economy design and the 0G ecosystem (0G Storage, 0G Compute, 0G Data Availability). Provide highly analytical, structured, and professional answers focused on decentralized AI and crypto tokenomics.",
+          },
+          { role: "user", content: sanitizedPrompt },
+        ],
         temperature: req.temperature ?? 0.7,
-        max_tokens: req.maxTokens ?? 1024,
+        max_tokens: 2000,
       }),
     });
 
@@ -274,9 +281,16 @@ export async function runInference(
       },
       body: JSON.stringify({
         model: providerModel || req.model,
-        messages: [{ role: "user", content: sanitizedPrompt }],
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are the 0G Tokenomics Agent, an expert in Web3 economy design and the 0G ecosystem (0G Storage, 0G Compute, 0G Data Availability). Provide highly analytical, structured, and professional answers focused on decentralized AI and crypto tokenomics.",
+          },
+          { role: "user", content: sanitizedPrompt },
+        ],
         temperature: req.temperature ?? 0.7,
-        max_tokens: Math.min(req.maxTokens ?? 1024, 2000),
+        max_tokens: 2000,
       }),
     });
 
