@@ -87,7 +87,15 @@ const LLM_PROVIDERS: Record<string, { label: string; color: string; models: stri
   groq: {
     label: "Groq",
     color: "text-blue-400",
-    models: ["llama-3.1-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it"],
+    models: [
+      "llama-3.3-70b-versatile",
+      "llama-3.1-8b-instant",
+      "openai/gpt-oss-120b",
+      "openai/gpt-oss-20b",
+      "meta-llama/llama-4-scout-17b-16e-instruct",
+      "qwen/qwen3-32b",
+      "qwen/qwen3.6-27b",
+    ],
     hint: "groq=gsk_...",
   },
   mistral: {
