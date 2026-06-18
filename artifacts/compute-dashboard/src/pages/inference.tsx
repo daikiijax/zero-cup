@@ -24,6 +24,24 @@ import { Cpu, Send, Loader2, AlertCircle, CheckCircle2, Bot, Zap, RefreshCw } fr
 // LLM Provider model presets
 // ──────────────────────────────────────────────────────────────
 const PROVIDER_MODELS: Record<string, { label: string; models: string[] }> = {
+  "0g": {
+    label: "0G Private Computer",
+    models: [
+      "ogm-1.0-35b-a3b",
+      "glm-s1",
+      "deepseek-v4-flash",
+      "deepseek-v4-pro",
+      "glm-s",
+      "glm-s-2",
+      "kimi-k2.7-code",
+      "minimax-m5",
+      "qwen3.6-plus",
+      "qwen3.7-max",
+      "qwen3.7-plus",
+      "deepseek-v3",
+      "qwen3-vl-30b-a3b-instruct",
+    ],
+  },
   openai: {
     label: "OpenAI",
     models: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
@@ -75,6 +93,7 @@ const PROVIDER_MODELS: Record<string, { label: string; models: string[] }> = {
 };
 
 const PROVIDER_COLORS: Record<string, string> = {
+  "0g": "text-primary",
   openai: "text-emerald-400",
   openrouter: "text-purple-400",
   anthropic: "text-orange-400",

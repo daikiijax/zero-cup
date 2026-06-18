@@ -57,6 +57,7 @@ function getProviderBaseUrl(provider: string): string {
     perplexity: "https://api.perplexity.ai",
     cohere: "https://api.cohere.ai/compatibility/v1",
     xai: "https://api.x.ai/v1",
+    "0g": "https://api.0g.ai/v1",
   };
   return urls[provider] ?? `https://api.${provider}.ai/v1`;
 }

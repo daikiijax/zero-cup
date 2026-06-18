@@ -39,6 +39,26 @@ const NETWORKS = {
 } as const;
 
 const LLM_PROVIDERS: Record<string, { label: string; color: string; models: string[]; hint: string }> = {
+  "0g": {
+    label: "0G Private Computer",
+    color: "text-primary",
+    models: [
+      "ogm-1.0-35b-a3b",
+      "glm-s1",
+      "deepseek-v4-flash",
+      "deepseek-v4-pro",
+      "glm-s",
+      "glm-s-2",
+      "kimi-k2.7-code",
+      "minimax-m5",
+      "qwen3.6-plus",
+      "qwen3.7-max",
+      "qwen3.7-plus",
+      "deepseek-v3",
+      "qwen3-vl-30b-a3b-instruct",
+    ],
+    hint: "0g=<your-api-key>",
+  },
   openai: {
     label: "OpenAI",
     color: "text-emerald-400",
@@ -460,6 +480,7 @@ export function Settings() {
               <div className="space-y-1.5 p-3 rounded-lg bg-muted/30 border border-border">
                 <p className="text-[11px] font-mono text-muted-foreground font-bold mb-2">EXAMPLES</p>
                 {[
+                  "0g=<your-api-key>",
                   "openai=sk-proj-...",
                   "openrouter=sk-or-v1-...",
                   "groq=gsk_...",
