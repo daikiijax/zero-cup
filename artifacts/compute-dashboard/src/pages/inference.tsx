@@ -513,7 +513,7 @@ export function Inference() {
                   value={[maxTokens]}
                   onValueChange={([v]) => setMaxTokens(v)}
                   min={64}
-                  max={4096}
+                  max={2000}
                   step={64}
                   disabled={isRunning}
                   className="w-full"

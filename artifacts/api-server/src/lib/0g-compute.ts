@@ -275,7 +275,7 @@ export async function runInference(
         model: providerModel || req.model,
         messages: [{ role: "user", content: sanitizedPrompt }],
         temperature: req.temperature ?? 0.7,
-        max_tokens: req.maxTokens ?? 1024,
+        max_tokens: Math.min(req.maxTokens ?? 1024, 2000),
       }),
     });
 
