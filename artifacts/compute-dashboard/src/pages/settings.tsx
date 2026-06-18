@@ -51,6 +51,7 @@ const LLM_PROVIDERS: Record<string, { label: string; color: string; models: stri
       "glm-s-2",
       "kimi-k2.7-code",
       "minimax-m5",
+      "minimax-m3",
       "qwen3.6-plus",
       "qwen3.7-max",
       "qwen3.7-plus",
