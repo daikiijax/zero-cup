@@ -141,7 +141,18 @@ export function Settings() {
     const preset = NETWORKS[net];
     setRpcUrl(preset.rpcUrl);
     setServiceUrl(preset.serviceUrl);
-    toast({ title: `Switched to ${preset.name}`, description: "Click Save Settings to apply." });
+
+    // Immediately persist so the API server picks up the new RPC URL on the next request.
+    localStorage.setItem(STORAGE_KEYS.RPC_URL, preset.rpcUrl);
+    localStorage.setItem(STORAGE_KEYS.SERVICE_URL, preset.serviceUrl);
+
+    window.dispatchEvent(new CustomEvent("zg-config-changed", {
+      detail: { rpcUrl: preset.rpcUrl, llmApiKey: localStorage.getItem(STORAGE_KEYS.LLM_API_KEY) ?? null },
+    }));
+
+    queryClient.clear();
+
+    toast({ title: `Switched to ${preset.name}`, description: "Network settings saved automatically." });
   }
 
   function handleSave(e: React.FormEvent) {
@@ -185,6 +196,22 @@ export function Settings() {
 
     toast({ title: "Settings Saved", description: "Your configuration has been saved locally." });
     if (privateKey.trim()) setTimeout(() => refetchWallet(), 500);
+  }
+
+  function handleSaveLLMKey() {
+    if (llmApiKey.trim()) {
+      localStorage.setItem(STORAGE_KEYS.LLM_API_KEY, llmApiKey.trim());
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.LLM_API_KEY);
+    }
+
+    window.dispatchEvent(new CustomEvent("zg-config-changed", {
+      detail: { rpcUrl: localStorage.getItem(STORAGE_KEYS.RPC_URL) ?? NETWORKS.testnet.rpcUrl, llmApiKey: llmApiKey.trim() || null },
+    }));
+
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+    toast({ title: "LLM Key Saved", description: llmApiKey.trim() ? `Using ${detectedLLMProvider ? (providerInfo?.label ?? detectedLLMProvider) : "external"} provider.` : "LLM key cleared." });
   }
 
   function handleReset() {
@@ -451,7 +478,7 @@ export function Settings() {
 
               <Button
                 type="button"
-                onClick={handleSave as any}
+                onClick={handleSaveLLMKey}
                 className="w-full font-mono tracking-widest"
                 variant={llmApiKey.trim() ? "default" : "outline"}
               >

@@ -1,13 +1,23 @@
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useGetDashboardStats, useListInferenceJobs, useListProviders } from "@workspace/api-client-react";
 import { Card } from "@/components/ui/card";
-import { Activity, Clock, Cpu, Server } from "lucide-react";
+import { Activity, Clock, Cpu, Server, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 
 export function Home() {
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
   const { data: jobs, isLoading: jobsLoading } = useListInferenceJobs();
   const { data: providers, isLoading: providersLoading } = useListProviders();
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    await queryClient.invalidateQueries();
+    setTimeout(() => setRefreshing(false), 600);
+  }
 
   const container = {
     hidden: { opacity: 0 },
@@ -21,7 +31,7 @@ export function Home() {
 
   const item = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
   };
 
   return (
@@ -36,6 +46,15 @@ export function Home() {
           <h1 className="text-3xl font-mono font-bold tracking-tight text-foreground">DASHBOARD</h1>
           <p className="text-muted-foreground mt-1">0G Compute Network Overview</p>
         </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing || statsLoading}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-primary hover:border-primary/40 transition-all font-mono text-xs disabled:opacity-50"
+          title="Refresh all data"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+          REFRESH
+        </button>
       </div>
 
       <motion.div 
