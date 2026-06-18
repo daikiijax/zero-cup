@@ -14,8 +14,11 @@ function extractZgConfig(req: { headers: Record<string, string | string[] | unde
   };
 }
 
-function detectNetwork(rpcUrl: string): "mainnet" | "testnet" {
-  return rpcUrl.includes("mainnet") ? "mainnet" : "testnet";
+function chainIdToNetwork(chainId: bigint): "mainnet" | "testnet" {
+  if (chainId === 16661n) return "mainnet";
+  if (chainId === 16602n) return "testnet";
+  // Fallback: mainnet URL lacks "testnet" substring
+  return "testnet";
 }
 
 walletRouter.get("/info", async (req, res) => {
@@ -38,7 +41,7 @@ walletRouter.get("/info", async (req, res) => {
     ]);
 
     const balanceEther = parseFloat(ethers.formatEther(balanceWei));
-    const networkName = detectNetwork(rpcUrl);
+    const networkName = chainIdToNetwork(network.chainId);
 
     // Per-network token usage from DB
     const [tokenStats] = await db
