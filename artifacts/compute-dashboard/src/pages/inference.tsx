@@ -18,7 +18,96 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { Cpu, Send, Loader2, AlertCircle, CheckCircle2, Bot, Zap, RefreshCw } from "lucide-react";
+import { Cpu, Send, Loader2, AlertCircle, CheckCircle2, Bot, Zap, RefreshCw, Copy, Check } from "lucide-react";
+
+// ──────────────────────────────────────────────────────────────
+// Markdown renderer (no external dep)
+// ──────────────────────────────────────────────────────────────
+function renderInline(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  const re = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  let last = 0, m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    const tok = m[0];
+    if (tok.startsWith("**")) {
+      parts.push(<strong key={m.index} className="font-bold text-foreground">{tok.slice(2, -2)}</strong>);
+    } else if (tok.startsWith("*")) {
+      parts.push(<em key={m.index} className="italic">{tok.slice(1, -1)}</em>);
+    } else {
+      parts.push(<code key={m.index} className="bg-muted/60 text-primary px-1 py-0.5 rounded text-[0.82em] font-mono">{tok.slice(1, -1)}</code>);
+    }
+    last = m.index + tok.length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
+function MarkdownOutput({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const nodes: React.ReactNode[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    // Fenced code block
+    if (line.trimStart().startsWith("```")) {
+      const fence = line.trimStart().slice(3);
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].trimStart().startsWith("```")) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      nodes.push(
+        <pre key={i} className="bg-muted/40 border border-border rounded-md p-3 overflow-x-auto my-3">
+          <code className="text-xs font-mono text-foreground/90 whitespace-pre">{codeLines.join("\n")}</code>
+        </pre>
+      );
+    }
+    // Headings
+    else if (/^### /.test(line)) {
+      nodes.push(<h3 key={i} className="text-sm font-bold text-foreground mt-4 mb-1">{renderInline(line.slice(4))}</h3>);
+    } else if (/^## /.test(line)) {
+      nodes.push(<h2 key={i} className="text-base font-bold text-foreground mt-5 mb-1.5 border-b border-border pb-1">{renderInline(line.slice(3))}</h2>);
+    } else if (/^# /.test(line)) {
+      nodes.push(<h1 key={i} className="text-lg font-bold text-foreground mt-5 mb-2 border-b border-border pb-1">{renderInline(line.slice(2))}</h1>);
+    }
+    // Bullet list
+    else if (/^[-*] /.test(line)) {
+      const items: React.ReactNode[] = [];
+      while (i < lines.length && /^[-*] /.test(lines[i])) {
+        items.push(<li key={i} className="leading-relaxed">{renderInline(lines[i].slice(2))}</li>);
+        i++;
+      }
+      nodes.push(<ul key={`ul-${i}`} className="list-disc list-inside space-y-0.5 my-2 pl-1 text-foreground/90">{items}</ul>);
+      continue;
+    }
+    // Numbered list
+    else if (/^\d+\. /.test(line)) {
+      const items: React.ReactNode[] = [];
+      while (i < lines.length && /^\d+\. /.test(lines[i])) {
+        items.push(<li key={i} className="leading-relaxed">{renderInline(lines[i].replace(/^\d+\. /, ""))}</li>);
+        i++;
+      }
+      nodes.push(<ol key={`ol-${i}`} className="list-decimal list-inside space-y-0.5 my-2 pl-1 text-foreground/90">{items}</ol>);
+      continue;
+    }
+    // Horizontal rule
+    else if (/^---+$/.test(line.trim())) {
+      nodes.push(<hr key={i} className="border-border my-3" />);
+    }
+    // Empty line → spacer
+    else if (line.trim() === "") {
+      nodes.push(<div key={i} className="h-2" />);
+    }
+    // Paragraph
+    else {
+      nodes.push(<p key={i} className="leading-relaxed text-foreground/90">{renderInline(line)}</p>);
+    }
+    i++;
+  }
+  return <div className="text-sm space-y-0.5">{nodes}</div>;
+}
 
 // ──────────────────────────────────────────────────────────────
 // LLM Provider model presets
@@ -224,6 +313,7 @@ export function Inference() {
   const [maxTokens, setMaxTokens] = useState(512);
   const [temperature, setTemperature] = useState(0.7);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [jobStatus, setJobStatus] = useState<string | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
@@ -479,11 +569,28 @@ export function Inference() {
                 <h2 className="font-mono font-bold text-sm text-muted-foreground">OUTPUT</h2>
                 <div className="flex items-center gap-2">
                   {activeJob.status === "completed" && (
-                    <span className="flex items-center gap-1.5 text-xs font-mono text-green-500">
-                      <CheckCircle2 className="w-3 h-3" />
-                      COMPLETED
-                      {activeJob.latencyMs && ` · ${activeJob.latencyMs}ms`}
-                    </span>
+                    <>
+                      <span className="flex items-center gap-1.5 text-xs font-mono text-green-500">
+                        <CheckCircle2 className="w-3 h-3" />
+                        COMPLETED
+                        {activeJob.latencyMs && ` · ${activeJob.latencyMs}ms`}
+                      </span>
+                      {activeJob.result && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(activeJob.result ?? "");
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 rounded text-xs font-mono border border-border hover:border-primary/40 hover:text-primary text-muted-foreground transition-colors"
+                          title="Copy output"
+                        >
+                          {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                          {copied ? "COPIED" : "COPY"}
+                        </button>
+                      )}
+                    </>
                   )}
                   {activeJob.status === "running" && (
                     <span className="flex items-center gap-1.5 text-xs font-mono text-primary animate-pulse">
@@ -506,13 +613,13 @@ export function Inference() {
                 </div>
               </div>
 
-              <div className="font-mono text-sm bg-background rounded-md border border-border p-4 min-h-[120px] terminal-scroll overflow-y-auto max-h-[400px] whitespace-pre-wrap leading-relaxed">
+              <div className="bg-background rounded-md border border-border p-4 min-h-[120px] overflow-y-auto max-h-[600px]">
                 {activeJob.status === "completed" && activeJob.result ? (
-                  <span className="text-green-400">{activeJob.result}</span>
+                  <MarkdownOutput text={activeJob.result} />
                 ) : activeJob.status === "failed" ? (
-                  <span className="text-destructive">ERROR: {activeJob.errorMessage ?? "Unknown error"}</span>
+                  <span className="text-destructive text-sm font-mono">ERROR: {activeJob.errorMessage ?? "Unknown error"}</span>
                 ) : (
-                  <span className="text-muted-foreground animate-pulse">
+                  <span className="text-muted-foreground text-sm font-mono animate-pulse">
                     {activeJob.status === "running" ? "▋ Generating..." : "▋ Waiting for network..."}
                   </span>
                 )}
