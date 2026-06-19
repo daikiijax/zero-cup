@@ -65,6 +65,41 @@ AI-driven Tokenomics & 0G Ecosystem Analyzer — submit inference jobs to the [0
 
 ---
 
+## Deploy to Vercel
+
+The easiest way to make the app publicly accessible.
+
+### 1. Database (required)
+
+Create a free Postgres database — [Neon](https://neon.tech) or [Supabase](https://supabase.com) work well. Copy the connection string.
+
+### 2. Push DB schema to production
+
+```bash
+DATABASE_URL=your-connection-string pnpm --filter @workspace/db run push
+```
+
+### 3. Import repo to Vercel
+
+1. Go to [vercel.com/new](https://vercel.com/new) → **Import Git Repository** → select `zero-cup`
+2. Leave **Framework Preset** as *Other* — `vercel.json` handles everything
+3. Add these **Environment Variables** before deploying:
+
+| Variable | Required | Value |
+|---|---|---|
+| `DATABASE_URL` | ✅ | Postgres connection string |
+| `SESSION_SECRET` | ✅ | Any long random string |
+| `ZG_RPC_URL` | — | Default: testnet `https://evmrpc-testnet.0g.ai` |
+| `ZG_SERVICE_URL` | — | Default: testnet indexer |
+| `ZG_PRIVATE_KEY` | — | Wallet key for on-chain inference (can set in UI) |
+| `LLM_API_KEY` | — | `provider=apikey` format (e.g. `groq=gsk_...`) |
+
+4. Click **Deploy**
+
+The app frontend + API serverless function will deploy together to a single `.vercel.app` domain.
+
+---
+
 ## Local Setup
 
 ### 1. Clone & install
@@ -87,7 +122,6 @@ Edit `.env`:
 |---|---|---|
 | `DATABASE_URL` | ✅ | Postgres connection string |
 | `SESSION_SECRET` | ✅ | Random string for session signing |
-| `PORT` | ✅ | API server port (e.g. `8080`) |
 | `ZG_RPC_URL` | — | 0G RPC endpoint (defaults to testnet) |
 | `ZG_SERVICE_URL` | — | 0G storage indexer URL |
 | `ZG_PRIVATE_KEY` | — | Wallet private key for on-chain inference |
@@ -102,16 +136,16 @@ pnpm --filter @workspace/db run push
 ### 4. Run API server
 
 ```bash
-PORT=8080 pnpm --filter @workspace/api-server run dev
+PORT=5000 pnpm --filter @workspace/api-server run dev
 ```
 
 ### 5. Run frontend (separate terminal)
 
 ```bash
-pnpm --filter @workspace/compute-dashboard run dev
+PORT=5173 BASE_PATH=/ pnpm --filter @workspace/compute-dashboard run dev
 ```
 
-Frontend: `http://localhost:5173` — API: `http://localhost:8080`
+Frontend: `http://localhost:5173` — API: `http://localhost:5000`
 
 ---
 
