@@ -1,22 +1,20 @@
 # 0G Tokenomics Agent
 
-AI-driven Tokenomics & 0G Ecosystem Analyzer — built on the [0G Compute Network](https://0g.ai).
-
-Submit AI inference jobs, track on-chain providers, view activity logs, and analyze tokenomics with a built-in expert persona.
+AI-driven Tokenomics & 0G Ecosystem Analyzer — submit inference jobs to the [0G Compute Network](https://0g.ai) or external LLM providers, with a built-in expert persona focused on Web3 tokenomics and the 0G ecosystem.
 
 ---
 
 ## Features
 
-- **AI Inference** — submit prompts to 0G Compute Network providers or external LLMs (Groq, OpenAI, Anthropic, etc.)
-- **0G Tokenomics Agent persona** — every response is guided by a Web3 / 0G ecosystem expert system prompt
-- **Live provider list** — auto-fetches available model providers from the 0G network
-- **Wallet panel** — shows address, balance, chain ID, and network (mainnet / testnet)
-- **Activity log** — full history of inference jobs with status, latency, and token counts
+- **AI Inference** — submit prompts to 0G Compute Network on-chain providers or external LLMs
+- **0G Tokenomics Agent persona** — system prompt preloaded as a Web3 / 0G ecosystem expert
+- **Live provider discovery** — auto-fetches available model providers from the 0G network
+- **Multi-provider LLM** — 0G Private Computer, Groq, OpenAI, OpenRouter, Anthropic, Mistral, DeepSeek, xAI
+- **Wallet panel** — shows address, OG balance, chain ID, and network (mainnet / testnet)
+- **Activity log** — history of inference jobs with status, latency, and token usage
 - **Markdown output** — responses rendered with headings, lists, code blocks, bold/italic
 - **Copy to clipboard** — one-click copy of any output
-- **Suggested prompts** — quick-start buttons for tokenomics questions
-- **Multi-provider support** — 0G Private Computer, Groq, OpenAI, OpenRouter, Anthropic, Mistral, DeepSeek, xAI
+- **Suggested prompts** — quick-start tokenomics questions
 
 ---
 
@@ -25,14 +23,37 @@ Submit AI inference jobs, track on-chain providers, view activity logs, and anal
 | Layer | Tech |
 |---|---|
 | Monorepo | pnpm workspaces |
-| Runtime | Node.js 24 |
 | Language | TypeScript 5.9 |
-| Frontend | React 18 + Vite + Tailwind CSS + shadcn/ui |
+| Frontend | React + Vite + Tailwind CSS + Radix UI (shadcn/ui) |
+| Routing | Wouter |
+| Data fetching | TanStack Query |
 | Backend | Express 5 |
+| 0G SDK | `@0gfoundation/0g-compute-ts-sdk` |
+| Blockchain | Ethers v6 |
 | Database | PostgreSQL + Drizzle ORM |
-| Validation | Zod v4 |
-| API contract | OpenAPI → Orval codegen |
-| AI SDK | 0G Compute SDK (`@0glabs/0g-serving-broker`) |
+| Validation | Zod |
+| API codegen | Orval (OpenAPI → React Query hooks + Zod schemas) |
+| Logger | Pino |
+| Build | esbuild |
+
+---
+
+## Project Structure
+
+```
+.
+├── artifacts/
+│   ├── compute-dashboard/    # React + Vite frontend
+│   └── api-server/           # Express API server
+├── lib/
+│   ├── api-spec/             # OpenAPI spec + Orval config
+│   ├── api-client-react/     # Generated React Query hooks
+│   ├── api-zod/              # Generated Zod schemas
+│   └── db/                   # Drizzle ORM schema & migrations
+├── scripts/                  # Utility scripts
+├── pnpm-workspace.yaml
+└── tsconfig.base.json
+```
 
 ---
 
@@ -49,8 +70,8 @@ Submit AI inference jobs, track on-chain providers, view activity logs, and anal
 ### 1. Clone & install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/0g-testing.git
-cd 0g-testing
+git clone https://github.com/daikiijax/zero-cup.git
+cd zero-cup
 pnpm install
 ```
 
@@ -60,7 +81,7 @@ pnpm install
 cp .env.example .env
 ```
 
-Edit `.env` and fill in:
+Edit `.env`:
 
 | Variable | Required | Description |
 |---|---|---|
@@ -90,17 +111,16 @@ PORT=8080 pnpm --filter @workspace/api-server run dev
 pnpm --filter @workspace/compute-dashboard run dev
 ```
 
-Frontend runs on `http://localhost:5173` by default.
-API server runs on `http://localhost:8080`.
+Frontend: `http://localhost:5173` — API: `http://localhost:8080`
 
 ---
 
 ## 0G Network Endpoints
 
-| Network | RPC | Service |
-|---|---|---|
-| Testnet | `https://evmrpc-testnet.0g.ai` | `https://indexer-storage-testnet-standard.0g.ai` |
-| Mainnet | `https://evmrpc.0g.ai` | `https://indexer-storage-mainnet-standard.0g.ai` |
+| Network | Chain ID | RPC | Service Indexer |
+|---|---|---|---|
+| Testnet | 16602 | `https://evmrpc-testnet.0g.ai` | `https://indexer-storage-testnet-standard.0g.ai` |
+| Mainnet | 16661 | `https://evmrpc.0g.ai` | `https://indexer-storage-mainnet-standard.0g.ai` |
 
 ---
 
@@ -109,33 +129,29 @@ API server runs on `http://localhost:8080`.
 Set `LLM_API_KEY` in the format `provider=apikey`:
 
 ```
-0g=your-pc-api-key            # 0G Private Computer (pc.0g.ai)
-groq=gsk_...                  # Groq
-openai=sk-...                 # OpenAI
-openrouter=sk-or-...          # OpenRouter
-anthropic=sk-ant-...          # Anthropic
-deepseek=sk-...               # DeepSeek
-mistral=...                   # Mistral
-xai=xai-...                   # xAI (Grok)
+0g=your-api-key           # 0G Private Computer (router-api.0g.ai)
+groq=gsk_...              # Groq
+openai=sk-...             # OpenAI
+openrouter=sk-or-...      # OpenRouter
+anthropic=sk-ant-...      # Anthropic
+deepseek=sk-...           # DeepSeek
+mistral=...               # Mistral
+xai=xai-...               # xAI (Grok)
 ```
 
 ---
 
-## Project Structure
+## API Routes
 
-```
-.
-├── artifacts/
-│   ├── compute-dashboard/    # React + Vite frontend
-│   └── api-server/           # Express API server
-├── lib/
-│   ├── api-spec/             # OpenAPI spec + Orval codegen
-│   ├── api-client-react/     # Generated React Query hooks
-│   └── db/                   # Drizzle ORM schema & migrations
-├── scripts/                  # Utility scripts
-├── pnpm-workspace.yaml
-└── tsconfig.base.json
-```
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/healthz` | Health check |
+| POST | `/api/inference` | Submit inference job |
+| GET | `/api/inference/:id` | Get job status & result |
+| GET | `/api/providers` | List 0G network providers |
+| GET | `/api/activity` | Inference job history |
+| GET | `/api/stats` | Dashboard stats |
+| GET | `/api/wallet/info` | Wallet balance & network |
 
 ---
 
@@ -151,7 +167,7 @@ pnpm --filter @workspace/api-spec run codegen
 # Push DB schema changes (dev only)
 pnpm --filter @workspace/db run push
 
-# Build all packages
+# Build all
 pnpm run build
 ```
 
