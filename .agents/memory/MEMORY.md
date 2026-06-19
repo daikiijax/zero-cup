@@ -1,3 +1,0 @@
-- [Orval body schema naming](orval-body-schema-naming.md) — Orval derives Zod schema name from operationId, not $ref component name; never name a component `<OperationIdPascal>Body`.
-- [api-zod dual export](api-zod-dual-export.md) — `export type *` in index.ts resolves TS2308 when Zod schema and TS type share a name; confirmed working.
-- [setExtraHeadersGetter](extra-headers-getter.md) — custom-fetch.ts pattern for per-request header injection; already added to lib/api-client-react.
