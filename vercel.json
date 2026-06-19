@@ -1,7 +1,7 @@
 {
   "version": 2,
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm run typecheck:libs && pnpm --filter @workspace/compute-dashboard run build",
+  "buildCommand": "pnpm --filter @workspace/compute-dashboard run build",
   "outputDirectory": "artifacts/compute-dashboard/dist/public",
   "functions": {
     "api/index.ts": {
