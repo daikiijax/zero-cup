@@ -44,6 +44,18 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
-# Replit
+# Replit (excluded from GitHub)
 .cache/
 .local/
+.agents/
+.replit
+.replitignore
+replit.md
+attached_assets/
+0g-testing/
+**/.replit-artifact/
+
+# Environment
+.env
+.env.local
+.env.*.local
