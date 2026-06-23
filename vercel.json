@@ -2,10 +2,10 @@
   "version": 2,
   "framework": null,
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/compute-dashboard run build",
+  "buildCommand": "pnpm --filter @workspace/compute-dashboard run build",
   "outputDirectory": "artifacts/compute-dashboard/dist",
   "functions": {
-    "api/index.mjs": {
+    "api/index.ts": {
       "maxDuration": 30
     }
   },
