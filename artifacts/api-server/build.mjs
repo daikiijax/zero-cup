@@ -8,6 +8,7 @@ import { rm } from "node:fs/promises";
 globalThis.require = createRequire(import.meta.url);
 
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(artifactDir, "../..");
 
 const external = [
   "*.node", "sharp", "better-sqlite3", "sqlite3", "canvas", "bcrypt",
@@ -25,7 +26,7 @@ const external = [
   "zeromq-prebuilt", "playwright", "puppeteer", "puppeteer-core", "electron",
 ];
 
-const banner = {
+const esmBanner = {
   js: `import { createRequire as __bannerCrReq } from 'node:module';
 import __bannerPath from 'node:path';
 import __bannerUrl from 'node:url';
@@ -40,7 +41,8 @@ async function buildAll() {
   const distDir = path.resolve(artifactDir, "dist");
   await rm(distDir, { recursive: true, force: true });
 
-  const shared = {
+  // Full server bundle (with listen) — ESM, used for standalone node process
+  await esbuild({
     platform: "node",
     bundle: true,
     format: "esm",
@@ -49,19 +51,25 @@ async function buildAll() {
     logLevel: "info",
     external,
     sourcemap: "linked",
-    banner,
+    banner: esmBanner,
     plugins: [esbuildPluginPino({ transports: ["pino-pretty"] })],
-  };
-
-  // Full server bundle (with listen) — used for standalone node process
-  await esbuild({
-    ...shared,
     entryPoints: [path.resolve(artifactDir, "src/index.ts")],
   });
 
-  // App-only bundle (no listen) — used by Vercel serverless function
+  // Serverless bundle — CJS, deployed to api/index.js for Vercel
+  // CJS has require/__dirname/__filename built-in, no banner shims needed.
+  // Footer ensures module.exports is the Express app directly.
   await esbuild({
-    ...shared,
+    platform: "node",
+    bundle: true,
+    format: "cjs",
+    outfile: path.resolve(repoRoot, "api/index.js"),
+    logLevel: "info",
+    external,
+    plugins: [esbuildPluginPino({ transports: [] })],
+    footer: {
+      js: "if (typeof exports.default !== 'undefined') module.exports = exports.default;",
+    },
     entryPoints: [path.resolve(artifactDir, "src/app.ts")],
   });
 }

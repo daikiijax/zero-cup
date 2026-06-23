@@ -1,9 +1,0 @@
-{
-  "extends": "../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "../.vercel/output/functions",
-    "noImplicitAny": false,
-    "types": ["node"]
-  },
-  "include": ["./**/*.ts", "../artifacts/api-server/src/**/*.ts", "../lib/**/*.ts"]
-}
