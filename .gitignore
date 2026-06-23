@@ -55,6 +55,9 @@ attached_assets/
 0g-testing/
 **/.replit-artifact/
 
+# Nested clone (accidentally cloned inside workspace)
+zero-cup/
+
 # Environment
 .env
 .env.local
