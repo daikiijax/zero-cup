@@ -8,6 +8,7 @@ import { rm } from "node:fs/promises";
 globalThis.require = createRequire(import.meta.url);
 
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(artifactDir, "../..");
 
 const external = [
   "*.node", "sharp", "better-sqlite3", "sqlite3", "canvas", "bcrypt",
@@ -59,9 +60,17 @@ async function buildAll() {
     entryPoints: [path.resolve(artifactDir, "src/index.ts")],
   });
 
-  // App-only bundle (no listen) — used by Vercel serverless function
+  // Serverless bundle — deployed directly to api/index.mjs for Vercel
+  // Uses transports:[] (no pino workers) and outputs to repo root api/ dir
   await esbuild({
-    ...shared,
+    platform: "node",
+    bundle: true,
+    format: "esm",
+    outfile: path.resolve(repoRoot, "api/index.mjs"),
+    logLevel: "info",
+    external,
+    banner,
+    plugins: [esbuildPluginPino({ transports: [] })],
     entryPoints: [path.resolve(artifactDir, "src/app.ts")],
   });
 }

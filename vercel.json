@@ -5,9 +5,8 @@
   "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/compute-dashboard run build",
   "outputDirectory": "artifacts/compute-dashboard/dist",
   "functions": {
-    "api/index.ts": {
-      "maxDuration": 30,
-      "includeFiles": "artifacts/api-server/dist/**"
+    "api/index.mjs": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
