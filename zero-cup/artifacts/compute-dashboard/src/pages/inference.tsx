@@ -319,6 +319,7 @@ export function Inference() {
   const [copied, setCopied] = useState(false);
   const [jobStatus, setJobStatus] = useState<string | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const [submittedParams, setSubmittedParams] = useState<{ model: string; temperature: number; maxTokens: number } | null>(null);
 
   const { data: activeJob } = useGetInferenceJob(activeJobId ?? "", {
     query: {
@@ -358,6 +359,7 @@ export function Inference() {
     if (!prompt.trim() || !effectiveModel) return;
     setActiveJobId(null);
     setJobStatus(null);
+    setSubmittedParams({ model: effectiveModel, temperature, maxTokens });
 
     submitInference.mutate(
       {
@@ -567,16 +569,19 @@ export function Inference() {
 
           {/* Result */}
           {activeJobId && activeJob && (
-            <Card ref={resultRef} className="p-6 bg-card border-border glow-card" data-testid="inference-result">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-mono font-bold text-sm text-muted-foreground">OUTPUT</h2>
+            <Card ref={resultRef} className="bg-card border-border glow-card overflow-hidden" data-testid="inference-result">
+              {/* Output header */}
+              <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-muted/20">
+                <h2 className="font-mono font-bold text-sm text-muted-foreground tracking-widest">OUTPUT</h2>
                 <div className="flex items-center gap-2">
                   {activeJob.status === "completed" && (
                     <>
                       <span className="flex items-center gap-1.5 text-xs font-mono text-green-500">
                         <CheckCircle2 className="w-3 h-3" />
                         COMPLETED
-                        {activeJob.latencyMs && ` · ${activeJob.latencyMs}ms`}
+                        {activeJob.latencyMs && (
+                          <span className="text-muted-foreground">· {activeJob.latencyMs}ms</span>
+                        )}
                       </span>
                       {activeJob.result && (
                         <button
@@ -616,31 +621,65 @@ export function Inference() {
                 </div>
               </div>
 
-              <div className="bg-background rounded-md border border-border p-4 min-h-[120px] overflow-y-auto max-h-[600px]">
-                {activeJob.status === "completed" && activeJob.result ? (
-                  <MarkdownOutput text={activeJob.result} />
-                ) : activeJob.status === "failed" ? (
-                  <span className="text-destructive text-sm font-mono">ERROR: {activeJob.errorMessage ?? "Unknown error"}</span>
-                ) : (
-                  <span className="text-muted-foreground text-sm font-mono animate-pulse">
-                    {activeJob.status === "running" ? "▋ Generating..." : "▋ Waiting for network..."}
-                  </span>
-                )}
-              </div>
-
-              {activeJob.status === "completed" && (
-                <div className="mt-3 flex gap-6 text-xs font-mono text-muted-foreground">
-                  {activeJob.inputTokens != null && (
-                    <span>IN: {activeJob.inputTokens} tokens</span>
-                  )}
-                  {activeJob.outputTokens != null && (
-                    <span>OUT: {activeJob.outputTokens} tokens</span>
-                  )}
-                  {activeJob.providerAddress && (
-                    <span>VIA: {activeJob.providerAddress.slice(0, 10)}...</span>
-                  )}
+              {/* Run parameters bar */}
+              {submittedParams && (
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 px-6 py-2.5 bg-muted/10 border-b border-border">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Model</span>
+                    <span className="text-[11px] font-mono text-primary font-medium truncate max-w-[200px]" title={submittedParams.model}>{submittedParams.model}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Temp</span>
+                    <span className="text-[11px] font-mono text-foreground/80">{submittedParams.temperature.toFixed(1)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Max Tokens</span>
+                    <span className="text-[11px] font-mono text-foreground/80">{submittedParams.maxTokens}</span>
+                  </div>
                 </div>
               )}
+
+              {/* Output body */}
+              <div className="p-6">
+                <div className="bg-background rounded-md border border-border p-5 min-h-[120px] overflow-y-auto max-h-[560px] terminal-scroll">
+                  {activeJob.status === "completed" && activeJob.result ? (
+                    <MarkdownOutput text={activeJob.result} />
+                  ) : activeJob.status === "failed" ? (
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+                      <span className="text-destructive text-sm font-mono">{activeJob.errorMessage ?? "Unknown error"}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-sm font-mono animate-pulse">
+                      {activeJob.status === "running" ? "▋ Generating..." : "▋ Waiting for network..."}
+                    </span>
+                  )}
+                </div>
+
+                {/* Token usage footer */}
+                {activeJob.status === "completed" && (activeJob.inputTokens != null || activeJob.outputTokens != null || activeJob.providerAddress) && (
+                  <div className="mt-3 flex flex-wrap gap-4 text-[11px] font-mono text-muted-foreground border-t border-border pt-3">
+                    {activeJob.inputTokens != null && (
+                      <span>
+                        <span className="text-muted-foreground/60 mr-1">IN</span>
+                        <span className="text-foreground/70">{activeJob.inputTokens.toLocaleString()} tokens</span>
+                      </span>
+                    )}
+                    {activeJob.outputTokens != null && (
+                      <span>
+                        <span className="text-muted-foreground/60 mr-1">OUT</span>
+                        <span className="text-foreground/70">{activeJob.outputTokens.toLocaleString()} tokens</span>
+                      </span>
+                    )}
+                    {activeJob.providerAddress && (
+                      <span>
+                        <span className="text-muted-foreground/60 mr-1">VIA</span>
+                        <span className="text-foreground/70 font-mono">{activeJob.providerAddress.slice(0, 6)}…{activeJob.providerAddress.slice(-4)}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
             </Card>
           )}
         </div>
