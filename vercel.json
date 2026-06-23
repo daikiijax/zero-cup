@@ -3,7 +3,7 @@
   "framework": null,
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @workspace/compute-dashboard run build",
-  "outputDirectory": "artifacts/compute-dashboard/dist/public",
+  "outputDirectory": "dist",
   "functions": {
     "api/index.ts": {
       "maxDuration": 30
