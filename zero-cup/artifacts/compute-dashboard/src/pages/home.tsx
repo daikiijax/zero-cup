@@ -72,7 +72,7 @@ export function Home() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="p-4 sm:p-8 space-y-6 sm:space-y-8"
+      className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8"
     >
       <div className="flex items-center justify-between">
         <div>
@@ -95,93 +95,72 @@ export function Home() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6"
       >
-        <motion.div variants={item}>
-          <Card className="p-6 bg-card border-border glow-card">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Requests</p>
-                <h3 className="text-3xl font-bold mt-2">{statsLoading ? "-" : stats?.totalRequests.toLocaleString()}</h3>
+        {[
+          {
+            label: "Total Requests",
+            value: statsLoading ? "-" : stats?.totalRequests.toLocaleString(),
+            sub: `+${statsLoading ? "-" : stats?.requestsToday} today`,
+            subColor: "text-green-500",
+            icon: Activity,
+            iconBg: "bg-primary/10 border-primary/20",
+            iconColor: "text-primary",
+          },
+          {
+            label: "Avg Latency",
+            value: statsLoading ? "-" : (stats?.avgLatencyMs?.toFixed(0) ?? "—"),
+            unit: "ms",
+            sub: "Network average",
+            subColor: "text-muted-foreground",
+            icon: Clock,
+            iconBg: "bg-secondary/10 border-secondary/20",
+            iconColor: "text-secondary",
+          },
+          {
+            label: "Tokens",
+            value: statsLoading ? "-" : (stats?.totalTokensUsed ?? 0) > 1000000 ? `${((stats?.totalTokensUsed ?? 0) / 1000000).toFixed(1)}M` : (stats?.totalTokensUsed ?? 0).toLocaleString(),
+            sub: `+${statsLoading ? "-" : stats?.tokensToday.toLocaleString()} today`,
+            subColor: "text-primary",
+            icon: Cpu,
+            iconBg: "bg-primary/10 border-primary/20",
+            iconColor: "text-primary",
+          },
+          {
+            label: "Providers",
+            value: statsLoading ? "-" : stats?.activeProviders,
+            sub: "100% uptime",
+            subColor: "text-green-500",
+            icon: Server,
+            iconBg: "bg-secondary/10 border-secondary/20",
+            iconColor: "text-secondary",
+          },
+        ].map(({ label, value, unit, sub, subColor, icon: Icon, iconBg, iconColor }) => (
+          <motion.div key={label} variants={item}>
+            <Card className="p-3 sm:p-6 bg-card border-border glow-card">
+              <div className="flex justify-between items-start gap-1">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">{label}</p>
+                  <h3 className="text-xl sm:text-3xl font-bold mt-1 sm:mt-2 tabular-nums">
+                    {value}{unit && <span className="text-sm sm:text-lg text-muted-foreground ml-0.5">{unit}</span>}
+                  </h3>
+                </div>
+                <div className={`p-1.5 sm:p-2 rounded-md border ${iconBg} shrink-0`}>
+                  <Icon className={`w-3.5 h-3.5 sm:w-5 sm:h-5 ${iconColor}`} />
+                </div>
               </div>
-              <div className="p-2 bg-primary/10 rounded-md border border-primary/20">
-                <Activity className="w-5 h-5 text-primary" />
+              <div className="mt-2 sm:mt-4 text-[11px] sm:text-xs">
+                <span className={`font-medium ${subColor}`}>{sub}</span>
               </div>
-            </div>
-            <div className="mt-4 flex items-center text-xs">
-              <span className="text-green-500 font-medium">+{statsLoading ? "-" : stats?.requestsToday}</span>
-              <span className="text-muted-foreground ml-2">today</span>
-            </div>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={item}>
-          <Card className="p-6 bg-card border-border glow-card">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg Latency</p>
-                <h3 className="text-3xl font-bold mt-2">
-                  {statsLoading ? "-" : stats?.avgLatencyMs?.toFixed(0) ?? "—"}
-                  <span className="text-lg text-muted-foreground ml-1">ms</span>
-                </h3>
-              </div>
-              <div className="p-2 bg-secondary/10 rounded-md border border-secondary/20">
-                <Clock className="w-5 h-5 text-secondary" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-xs">
-              <span className="text-muted-foreground">Global network average</span>
-            </div>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={item}>
-          <Card className="p-6 bg-card border-border glow-card">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Tokens Processed</p>
-                <h3 className="text-3xl font-bold mt-2">
-                  {statsLoading
-                    ? "-"
-                    : (stats?.totalTokensUsed ?? 0) > 1000000
-                    ? `${((stats?.totalTokensUsed ?? 0) / 1000000).toFixed(1)}M`
-                    : stats?.totalTokensUsed.toLocaleString()}
-                </h3>
-              </div>
-              <div className="p-2 bg-primary/10 rounded-md border border-primary/20">
-                <Cpu className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-xs">
-              <span className="text-primary font-medium">+{statsLoading ? "-" : stats?.tokensToday.toLocaleString()}</span>
-              <span className="text-muted-foreground ml-2">today</span>
-            </div>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={item}>
-          <Card className="p-6 bg-card border-border glow-card">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Providers</p>
-                <h3 className="text-3xl font-bold mt-2">{statsLoading ? "-" : stats?.activeProviders}</h3>
-              </div>
-              <div className="p-2 bg-secondary/10 rounded-md border border-secondary/20">
-                <Server className="w-5 h-5 text-secondary" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-xs">
-              <span className="text-green-500 font-medium">100%</span>
-              <span className="text-muted-foreground ml-2">uptime</span>
-            </div>
-          </Card>
-        </motion.div>
+            </Card>
+          </motion.div>
+        ))}
       </motion.div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Hourly requests chart */}
-        <Card className="lg:col-span-2 p-6 bg-card border-border glow-card">
+        <Card className="lg:col-span-2 p-4 sm:p-6 bg-card border-border glow-card">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="font-mono font-bold text-sm text-muted-foreground">REQUESTS (LAST 12H)</h2>
@@ -265,8 +244,8 @@ export function Home() {
       </div>
 
       {/* Recent jobs + providers */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 p-6 bg-card border-border overflow-hidden glow-card">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <Card className="lg:col-span-2 p-4 sm:p-6 bg-card border-border overflow-hidden glow-card">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-mono font-bold text-lg">RECENT JOBS</h2>
           </div>

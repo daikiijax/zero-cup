@@ -245,27 +245,27 @@ export function Chat() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col h-[calc(100vh-0px)] lg:h-screen"
+      className="flex flex-col h-[calc(100vh-56px)] lg:h-screen"
     >
       {pendingJobId && <JobPoller jobId={pendingJobId} onDone={handleJobDone} />}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border bg-card shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
-            <Bot className="w-4 h-4 text-primary" />
+      <div className="flex items-center justify-between px-3 sm:px-6 py-2.5 border-b border-border bg-card shrink-0 gap-2">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+            <Bot className="w-3.5 h-3.5 text-primary" />
           </div>
-          <div>
-            <h1 className="font-mono font-bold text-sm">0G TOKENOMICS AGENT</h1>
-            <p className="text-[11px] text-muted-foreground font-mono">Multi-turn conversation</p>
+          <div className="hidden sm:block">
+            <h1 className="font-mono font-bold text-xs">0G TOKENOMICS AGENT</h1>
+            <p className="text-[10px] text-muted-foreground font-mono">Multi-turn chat</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-1 justify-end">
           <Select value={selectedModel} onValueChange={setSelectedModel} disabled={isWaiting}>
-            <SelectTrigger className="w-[180px] font-mono text-xs h-8 bg-background border-border">
+            <SelectTrigger className="w-[140px] sm:w-[190px] font-mono text-xs h-8 bg-background border-border">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="font-mono bg-card border-border">
+            <SelectContent className="font-mono bg-card border-border w-[220px]">
               {QUICK_MODELS.map((m) => (
                 <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
               ))}
@@ -273,7 +273,7 @@ export function Chat() {
           </Select>
           <button
             onClick={handleExport}
-            className="p-2 rounded border border-border text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+            className="p-2 rounded border border-border text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors shrink-0"
             title="Export conversation"
           >
             <Download className="w-3.5 h-3.5" />
@@ -281,7 +281,7 @@ export function Chat() {
           <button
             onClick={handleClear}
             disabled={isWaiting}
-            className="p-2 rounded border border-border text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors disabled:opacity-40"
+            className="p-2 rounded border border-border text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors disabled:opacity-40 shrink-0"
             title="Clear conversation"
           >
             <Trash2 className="w-3.5 h-3.5" />
