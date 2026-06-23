@@ -25,17 +25,20 @@ import { Cpu, Send, Loader2, AlertCircle, CheckCircle2, Bot, Zap, RefreshCw, Cop
 // ──────────────────────────────────────────────────────────────
 function renderInline(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
-  const re = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  // Support **bold**, *italic*, `code`, ~~strikethrough~~
+  const re = /(~~[^~]+~~|`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g;
   let last = 0, m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
     const tok = m[0];
-    if (tok.startsWith("**")) {
-      parts.push(<strong key={m.index} className="font-bold text-foreground">{tok.slice(2, -2)}</strong>);
+    if (tok.startsWith("~~")) {
+      parts.push(<s key={m.index} className="opacity-60">{tok.slice(2, -2)}</s>);
+    } else if (tok.startsWith("**")) {
+      parts.push(<strong key={m.index} className="font-semibold text-foreground">{tok.slice(2, -2)}</strong>);
     } else if (tok.startsWith("*")) {
-      parts.push(<em key={m.index} className="italic">{tok.slice(1, -1)}</em>);
+      parts.push(<em key={m.index} className="italic text-foreground/80">{tok.slice(1, -1)}</em>);
     } else {
-      parts.push(<code key={m.index} className="bg-muted/60 text-primary px-1 py-0.5 rounded text-[0.82em] font-mono">{tok.slice(1, -1)}</code>);
+      parts.push(<code key={m.index} className="bg-muted/70 text-primary px-1.5 py-0.5 rounded text-[0.8em] font-mono border border-border/40">{tok.slice(1, -1)}</code>);
     }
     last = m.index + tok.length;
   }
@@ -44,69 +47,141 @@ function renderInline(text: string): React.ReactNode[] {
 }
 
 function MarkdownOutput({ text }: { text: string }) {
-  const lines = text.split("\n");
+  // Normalize line endings and collapse 3+ blank lines into 2
+  const normalized = text.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  const lines = normalized.split("\n");
   const nodes: React.ReactNode[] = [];
   let i = 0;
+  let key = 0;
+
   while (i < lines.length) {
     const line = lines[i];
-    // Fenced code block
-    if (line.trimStart().startsWith("```")) {
-      const fence = line.trimStart().slice(3);
+    const trimmed = line.trim();
+
+    // ── Fenced code block ──
+    if (trimmed.startsWith("```")) {
+      const lang = trimmed.slice(3).trim();
       const codeLines: string[] = [];
       i++;
-      while (i < lines.length && !lines[i].trimStart().startsWith("```")) {
+      while (i < lines.length && !lines[i].trim().startsWith("```")) {
         codeLines.push(lines[i]);
         i++;
       }
       nodes.push(
-        <pre key={i} className="bg-muted/40 border border-border rounded-md p-3 overflow-x-auto my-3">
-          <code className="text-xs font-mono text-foreground/90 whitespace-pre">{codeLines.join("\n")}</code>
-        </pre>
+        <div key={key++} className="my-4 rounded-lg overflow-hidden border border-border">
+          {lang && (
+            <div className="flex items-center gap-2 px-4 py-1.5 bg-muted/60 border-b border-border">
+              <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">{lang}</span>
+            </div>
+          )}
+          <pre className="bg-muted/30 p-4 overflow-x-auto">
+            <code className="text-xs font-mono text-foreground/90 whitespace-pre leading-relaxed">{codeLines.join("\n")}</code>
+          </pre>
+        </div>
+      );
+      i++; // skip closing ```
+      continue;
+    }
+
+    // ── Blockquote ──
+    if (trimmed.startsWith("> ")) {
+      const quoteLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith("> ")) {
+        quoteLines.push(lines[i].trim().slice(2));
+        i++;
+      }
+      nodes.push(
+        <blockquote key={key++} className="border-l-2 border-primary/50 pl-4 my-3 text-foreground/70 italic">
+          {quoteLines.map((ql, qi) => <p key={qi} className="leading-relaxed">{renderInline(ql)}</p>)}
+        </blockquote>
+      );
+      continue;
+    }
+
+    // ── Headings ──
+    if (/^### /.test(trimmed)) {
+      nodes.push(<h3 key={key++} className="text-sm font-bold text-foreground mt-5 mb-2">{renderInline(trimmed.slice(4))}</h3>);
+      i++; continue;
+    }
+    if (/^## /.test(trimmed)) {
+      nodes.push(<h2 key={key++} className="text-base font-bold text-foreground mt-6 mb-2 pb-1.5 border-b border-border/60">{renderInline(trimmed.slice(3))}</h2>);
+      i++; continue;
+    }
+    if (/^# /.test(trimmed)) {
+      nodes.push(<h1 key={key++} className="text-lg font-bold text-foreground mt-6 mb-3 pb-2 border-b border-border/60">{renderInline(trimmed.slice(2))}</h1>);
+      i++; continue;
+    }
+
+    // ── Bullet list ──
+    if (/^[-*+] /.test(trimmed)) {
+      const items: React.ReactNode[] = [];
+      while (i < lines.length && /^[-*+] /.test(lines[i].trim())) {
+        const content = lines[i].trim().slice(2);
+        items.push(
+          <li key={i} className="leading-relaxed text-foreground/85 flex gap-2">
+            <span className="text-primary/60 mt-1 shrink-0">•</span>
+            <span>{renderInline(content)}</span>
+          </li>
+        );
+        i++;
+      }
+      nodes.push(<ul key={key++} className="space-y-1.5 my-3 pl-1">{items}</ul>);
+      continue;
+    }
+
+    // ── Numbered list ──
+    if (/^\d+\. /.test(trimmed)) {
+      const items: React.ReactNode[] = [];
+      let num = 1;
+      while (i < lines.length && /^\d+\. /.test(lines[i].trim())) {
+        const content = lines[i].trim().replace(/^\d+\. /, "");
+        items.push(
+          <li key={i} className="leading-relaxed text-foreground/85 flex gap-2.5">
+            <span className="text-primary/70 font-mono text-xs mt-1 shrink-0 w-4 text-right">{num}.</span>
+            <span>{renderInline(content)}</span>
+          </li>
+        );
+        i++; num++;
+      }
+      nodes.push(<ol key={key++} className="space-y-1.5 my-3 pl-1">{items}</ol>);
+      continue;
+    }
+
+    // ── Horizontal rule ──
+    if (/^---+$/.test(trimmed) || /^\*\*\*+$/.test(trimmed)) {
+      nodes.push(<hr key={key++} className="border-border/50 my-5" />);
+      i++; continue;
+    }
+
+    // ── Blank line → paragraph break (skip silently, spacing handled by space-y) ──
+    if (trimmed === "") {
+      i++; continue;
+    }
+
+    // ── Paragraph: collect consecutive non-special lines ──
+    const paraLines: string[] = [];
+    while (
+      i < lines.length &&
+      lines[i].trim() !== "" &&
+      !/^(#{1,3} |[-*+] |\d+\. |> |```|---+$|\*\*\*+$)/.test(lines[i].trim())
+    ) {
+      paraLines.push(lines[i].trim());
+      i++;
+    }
+    if (paraLines.length > 0) {
+      nodes.push(
+        <p key={key++} className="leading-7 text-foreground/85">
+          {paraLines.flatMap((pl, pi) =>
+            pi < paraLines.length - 1
+              ? [...renderInline(pl), " "]
+              : renderInline(pl)
+          )}
+        </p>
       );
     }
-    // Headings
-    else if (/^### /.test(line)) {
-      nodes.push(<h3 key={i} className="text-sm font-bold text-foreground mt-4 mb-1">{renderInline(line.slice(4))}</h3>);
-    } else if (/^## /.test(line)) {
-      nodes.push(<h2 key={i} className="text-base font-bold text-foreground mt-5 mb-1.5 border-b border-border pb-1">{renderInline(line.slice(3))}</h2>);
-    } else if (/^# /.test(line)) {
-      nodes.push(<h1 key={i} className="text-lg font-bold text-foreground mt-5 mb-2 border-b border-border pb-1">{renderInline(line.slice(2))}</h1>);
-    }
-    // Bullet list
-    else if (/^[-*] /.test(line)) {
-      const items: React.ReactNode[] = [];
-      while (i < lines.length && /^[-*] /.test(lines[i])) {
-        items.push(<li key={i} className="leading-relaxed">{renderInline(lines[i].slice(2))}</li>);
-        i++;
-      }
-      nodes.push(<ul key={`ul-${i}`} className="list-disc list-inside space-y-0.5 my-2 pl-1 text-foreground/90">{items}</ul>);
-      continue;
-    }
-    // Numbered list
-    else if (/^\d+\. /.test(line)) {
-      const items: React.ReactNode[] = [];
-      while (i < lines.length && /^\d+\. /.test(lines[i])) {
-        items.push(<li key={i} className="leading-relaxed">{renderInline(lines[i].replace(/^\d+\. /, ""))}</li>);
-        i++;
-      }
-      nodes.push(<ol key={`ol-${i}`} className="list-decimal list-inside space-y-0.5 my-2 pl-1 text-foreground/90">{items}</ol>);
-      continue;
-    }
-    // Horizontal rule
-    else if (/^---+$/.test(line.trim())) {
-      nodes.push(<hr key={i} className="border-border my-3" />);
-    }
-    // Empty line → spacer
-    else if (line.trim() === "") {
-      nodes.push(<div key={i} className="h-2" />);
-    }
-    // Paragraph
-    else {
-      nodes.push(<p key={i} className="leading-relaxed text-foreground/90">{renderInline(line)}</p>);
-    }
-    i++;
   }
-  return <div className="text-sm space-y-0.5">{nodes}</div>;
+
+  return <div className="text-sm space-y-1">{nodes}</div>;
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -319,7 +394,6 @@ export function Inference() {
   const [copied, setCopied] = useState(false);
   const [jobStatus, setJobStatus] = useState<string | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
-  const [submittedParams, setSubmittedParams] = useState<{ model: string; temperature: number; maxTokens: number } | null>(null);
 
   const { data: activeJob } = useGetInferenceJob(activeJobId ?? "", {
     query: {
@@ -359,7 +433,6 @@ export function Inference() {
     if (!prompt.trim() || !effectiveModel) return;
     setActiveJobId(null);
     setJobStatus(null);
-    setSubmittedParams({ model: effectiveModel, temperature, maxTokens });
 
     submitInference.mutate(
       {
@@ -621,27 +694,9 @@ export function Inference() {
                 </div>
               </div>
 
-              {/* Run parameters bar */}
-              {submittedParams && (
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 px-6 py-2.5 bg-muted/10 border-b border-border">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Model</span>
-                    <span className="text-[11px] font-mono text-primary font-medium truncate max-w-[200px]" title={submittedParams.model}>{submittedParams.model}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Temp</span>
-                    <span className="text-[11px] font-mono text-foreground/80">{submittedParams.temperature.toFixed(1)}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Max Tokens</span>
-                    <span className="text-[11px] font-mono text-foreground/80">{submittedParams.maxTokens}</span>
-                  </div>
-                </div>
-              )}
-
               {/* Output body */}
               <div className="p-6">
-                <div className="bg-background rounded-md border border-border p-5 min-h-[120px] overflow-y-auto max-h-[560px] terminal-scroll">
+                <div className="bg-background rounded-md border border-border p-5 min-h-[120px] overflow-y-auto max-h-[600px] terminal-scroll">
                   {activeJob.status === "completed" && activeJob.result ? (
                     <MarkdownOutput text={activeJob.result} />
                   ) : activeJob.status === "failed" ? (
