@@ -245,4 +245,4 @@ pnpm run build
 
 ## License
 
-[MIT](LICENSE) © 2025 daikiijax
+[MIT](LICENSE) © 2026 daikiijax
