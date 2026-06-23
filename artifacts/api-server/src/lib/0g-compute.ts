@@ -100,7 +100,7 @@ export async function runExternalInference(
   };
 
   if (llmConfig.provider === "openrouter") {
-    headers["HTTP-Referer"] = "https://0g-compute.replit.app";
+    headers["HTTP-Referer"] = "https://0g-compute.app";
     headers["X-Title"] = "0G Compute Dashboard";
   }
 

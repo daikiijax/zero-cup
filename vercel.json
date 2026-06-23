@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "installCommand": "pnpm install",
+  "framework": null,
+  "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @workspace/compute-dashboard run build",
   "outputDirectory": "artifacts/compute-dashboard/dist/public",
   "functions": {
