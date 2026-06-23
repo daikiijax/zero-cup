@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useHealthCheck } from "@workspace/api-client-react";
-import { Activity, Cpu, LayoutDashboard, Settings, X } from "lucide-react";
+import { Activity, Cpu, Info, LayoutDashboard, MessageSquare, Settings, X } from "lucide-react";
 
 interface SidebarProps {
   open?: boolean;
@@ -15,9 +15,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   const links = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/chat", label: "Chat", icon: MessageSquare, badge: "NEW" },
     { href: "/inference", label: "Inference", icon: Cpu },
     { href: "/activity", label: "Activity Logs", icon: Activity },
     { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/about", label: "About", icon: Info },
   ];
 
   return (
@@ -25,7 +27,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       className={[
         "fixed inset-y-0 left-0 w-64 border-r border-border bg-card flex flex-col z-30",
         "transition-transform duration-200 ease-in-out",
-        // Mobile: slide in/out. Desktop: always visible.
         "lg:translate-x-0",
         open ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
       ].join(" ")}
@@ -38,7 +39,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </div>
           <span className="font-mono font-bold text-lg tracking-tight">0G COMPUTE</span>
         </div>
-        {/* Close button — mobile only */}
         <button
           className="lg:hidden p-1 rounded text-muted-foreground hover:text-foreground"
           onClick={onClose}
@@ -49,7 +49,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 py-6 px-4 space-y-2">
+      <nav className="flex-1 py-6 px-4 space-y-1">
         {links.map((link) => {
           const isActive = location === link.href;
           return (
@@ -63,7 +63,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 }`}
               >
                 <link.icon className="w-4 h-4" />
-                <span className="font-medium text-sm">{link.label}</span>
+                <span className="font-medium text-sm flex-1">{link.label}</span>
+                {"badge" in link && link.badge && (
+                  <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary border border-primary/30">
+                    {link.badge}
+                  </span>
+                )}
               </div>
             </Link>
           );

@@ -6,7 +6,6 @@ import { Shell } from "./components/layout/shell";
 import { AnimatePresence } from "framer-motion";
 import { setExtraHeadersGetter } from "@workspace/api-client-react";
 
-// Forward ZG config and LLM API key from localStorage to every API request as headers.
 setExtraHeadersGetter(() => {
   const headers: Record<string, string> = {};
   const key = localStorage.getItem("ZG_PRIVATE_KEY");
@@ -20,11 +19,12 @@ setExtraHeadersGetter(() => {
   return headers;
 });
 
-// Pages
 import { Home } from "./pages/home";
 import { Inference } from "./pages/inference";
 import { Activity } from "./pages/activity";
 import { Settings } from "./pages/settings";
+import { Chat } from "./pages/chat";
+import { About } from "./pages/about";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,9 +40,11 @@ function Router() {
     <AnimatePresence mode="wait">
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/chat" component={Chat} />
         <Route path="/inference" component={Inference} />
         <Route path="/activity" component={Activity} />
         <Route path="/settings" component={Settings} />
+        <Route path="/about" component={About} />
         <Route>
           <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
             <h1 className="text-2xl font-mono text-muted-foreground">404 - NOT FOUND</h1>

@@ -18,7 +18,7 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { Cpu, Send, Loader2, AlertCircle, CheckCircle2, Bot, Zap, RefreshCw, Copy, Check } from "lucide-react";
+import { Cpu, Send, Loader2, AlertCircle, CheckCircle2, Bot, Zap, RefreshCw, Copy, Check, Download } from "lucide-react";
 
 // ──────────────────────────────────────────────────────────────
 // Markdown renderer (no external dep)
@@ -657,19 +657,50 @@ export function Inference() {
                         )}
                       </span>
                       {activeJob.result && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(activeJob.result ?? "");
-                            setCopied(true);
-                            setTimeout(() => setCopied(false), 2000);
-                          }}
-                          className="flex items-center gap-1 px-2 py-1 rounded text-xs font-mono border border-border hover:border-primary/40 hover:text-primary text-muted-foreground transition-colors"
-                          title="Copy output"
-                        >
-                          {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
-                          {copied ? "COPIED" : "COPY"}
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(activeJob.result ?? "");
+                              setCopied(true);
+                              setTimeout(() => setCopied(false), 2000);
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 rounded text-xs font-mono border border-border hover:border-primary/40 hover:text-primary text-muted-foreground transition-colors"
+                            title="Copy output"
+                          >
+                            {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                            {copied ? "COPIED" : "COPY"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const content = [
+                                `# 0G Inference Output`,
+                                `**Model:** ${activeJob.model}`,
+                                `**Status:** ${activeJob.status}`,
+                                activeJob.latencyMs ? `**Latency:** ${activeJob.latencyMs}ms` : "",
+                                "",
+                                "## Prompt",
+                                activeJob.prompt,
+                                "",
+                                "## Output",
+                                activeJob.result ?? "",
+                              ].filter(Boolean).join("\n");
+                              const blob = new Blob([content], { type: "text/markdown" });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = `0g-inference-${activeJob.id.slice(0, 8)}.md`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 rounded text-xs font-mono border border-border hover:border-primary/40 hover:text-primary text-muted-foreground transition-colors"
+                            title="Download as markdown"
+                          >
+                            <Download className="w-3 h-3" />
+                            EXPORT
+                          </button>
+                        </div>
                       )}
                     </>
                   )}
