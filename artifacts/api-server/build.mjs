@@ -56,21 +56,23 @@ async function buildAll() {
     entryPoints: [path.resolve(artifactDir, "src/index.ts")],
   });
 
-  // Serverless bundle — CJS, deployed to api/index.js for Vercel
-  // CJS has require/__dirname/__filename built-in, no banner shims needed.
-  // Footer ensures module.exports is the Express app directly.
+  // Serverless bundle — CJS, deployed to api/index.js for Vercel.
+  // No esbuildPluginPino: production pino uses no transport workers.
+  // Named entry {in, out} with outdir so esbuild produces api/index.js.
+  // Footer promotes exports.default to module.exports for @vercel/node.
   await esbuild({
     platform: "node",
     bundle: true,
     format: "cjs",
-    outfile: path.resolve(repoRoot, "api/index.js"),
+    outdir: path.resolve(repoRoot, "api"),
     logLevel: "info",
     external,
-    plugins: [esbuildPluginPino({ transports: [] })],
     footer: {
       js: "if (typeof exports.default !== 'undefined') module.exports = exports.default;",
     },
-    entryPoints: [path.resolve(artifactDir, "src/app.ts")],
+    entryPoints: [
+      { in: path.resolve(artifactDir, "src/app.ts"), out: "index" },
+    ],
   });
 }
 
